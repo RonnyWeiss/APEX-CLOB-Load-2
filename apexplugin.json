@@ -1,0 +1,34 @@
+﻿{
+    "name": "APEX CLOB Load 2",
+    "version": "1.0",
+    "description": "This plug-in can load clob data to any DOM element or Item on the APEX page, including also the RichTextEditor (CKE).\r\nIt's also possible to upload a CLOB value again to the database. This value is stored in APEX Collection or it's also possible that this plug-ins calls a PL\/SQL API e.g. to write the CLOB into table after upload.\r\nYou can set Affected Element this is the element where any Dynamic Action Event is fired on and where the loader icon is shown.\r\nWhen you want to get content of collection when submit page. Call the Upload with Dynamic Action \"Before PAge Submit\".",
+    "keywords": ["oracle", "apex", "plugin", "dynamic action"],
+    "homepage": "https://github.com/RonnyWeiss/APEX-CLOB-Load-2",
+    "bugs": {
+        "url": "https://github.com/RonnyWeiss/APEX-CLOB-Load-2",
+        "email": "wronny@gmx.de"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "Ronny Weiß",
+        "email": "wronny@gmx.de",
+        "twitter": "ronny_weiss_",
+        "donationUrl": "https://www.paypal.me/RonnyW1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RonnyWeiss/APEX-CLOB-Load-2.git"
+    },
+    "oracle": {
+        "versions": ["11.2.0.1", "12.1.0.1", "12.2.0.1", "18.4.0.0"],
+        "apex": {
+            "versions": ["5.1.3", "18.1.0.00.45", "18.2.0.00.12"],
+            "plugin": {
+                "internalName": "APEX.CLOB.LOAD.2",
+                "type": "dynamic action",
+                "demo": "https://apex.oracle.com/pls/apex/f?p=103428",
+                "previewImage": "https://github.com/RonnyWeiss/APEX-CLOB-Load-2/raw/master/screenshot.gif"
+            }
+        }
+    }
+}
