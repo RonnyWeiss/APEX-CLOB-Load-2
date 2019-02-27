@@ -99,6 +99,9 @@ var clobLoad = (function () {
      ***********************************************************************/
     function setDomElement(pID, pValue, pOpts) {
         if (pID) {
+
+            $(pID).empty();
+
             if (!pOpts.escapeHTML) {
                 $(pID).html(pValue);
             } else {
