@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.0.1";
+    var scriptVersion = "1.1";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -89,8 +89,37 @@ var clobLoad = (function () {
             } else {
                 console.error("Error while try to call apex.item" + e);
             }
+        },
+        jsonSaveExtend: function (srcConfig, targetConfig) {
+            var finalConfig = {};
+            /* try to parse config json when string or just set */
+            if (typeof targetConfig === 'string') {
+                try {
+                    targetConfig = JSON.parse(targetConfig);
+                } catch (e) {
+                    console.error("Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.");
+                    console.error(e);
+                    console.error(targetConfig);
+                }
+            } else {
+                finalConfig = targetConfig;
+            }
+            /* try to merge with standard if any attribute is missing */
+            try {
+                finalConfig = $.extend(true, srcConfig, targetConfig);
+            } catch (e) {
+                console.error('Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.');
+                console.error(e);
+                finalConfig = srcConfig;
+                console.error(finalConfig);
+            }
+            return finalConfig;
         }
     };
+
+    function sanatizeCLOB(pCLOB, pOpts) {
+        return DOMPurify.sanitize(pCLOB, pOpts.sanatizeOptions);
+    }
 
     /***********************************************************************
      **
@@ -103,7 +132,12 @@ var clobLoad = (function () {
             $(pID).empty();
 
             if (!pOpts.escapeHTML) {
-                $(pID).html(pValue);
+                if (!pOpts.sanatize) {
+                    $(pID).html(pValue);
+                } else {
+                    var str = sanatizeCLOB(pValue, pOpts);
+                    $(pID).html(str);
+                }
             } else {
                 $(pID).text(pValue);
             }
@@ -121,7 +155,11 @@ var clobLoad = (function () {
         var str;
         if (pID) {
             if (!pOpts.escapeHTML) {
-                str = pValue;
+                if (!pOpts.sanatize) {
+                    str = pValue;
+                } else {
+                    str = sanatizeCLOB(pValue, pOpts);
+                }
             } else {
                 str = util.escapeHTML(pValue);
             }
@@ -142,7 +180,11 @@ var clobLoad = (function () {
 
         if (pID) {
             if (!pOpts.escapeHTML) {
-                str = pValue;
+                if (!pOpts.sanatize) {
+                    str = pValue;
+                } else {
+                    str = sanatizeCLOB(pValue, pOpts);
+                }
             } else {
                 str = util.escapeHTML(pValue);
             }
@@ -260,8 +302,22 @@ var clobLoad = (function () {
             util.debug.info(pOpts);
             var opts = pOpts;
 
+            var defaultSanatizeOptions = {
+                "ALLOWED_TAGS": ["h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol",
+  "nl", "li", "b", "i", "strong", "em", "strike", "code", "hr", "br", "div",
+  "table", "thead", "caption", "tbody", "tr", "th", "td", "pre", "img"],
+                "ALLOWED_ATTR": ["style", "src", "href", "target", "id"]
+            };
+
+            opts.sanatizeOptions = util.jsonSaveExtend(pOpts.sanatizeOptions, defaultSanatizeOptions);
+
             if (opts.escapeHTML == "N") {
                 opts.escapeHTML = false;
+                if (opts.sanatize == "N") {
+                    opts.sanatize = false;
+                } else {
+                    opts.sanatize = true;
+                }
             } else {
                 opts.escapeHTML = true;
             }
