@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.1";
+    var scriptVersion = "1.2";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -50,6 +50,29 @@ var clobLoad = (function () {
                     .replace(/'/g, "&#x27;")
                     .replace(/\//g, "&#x2F;");
             }
+        },
+        unEscapeHTML: function (str) {
+            if (str === null) {
+                return null;
+            }
+            if (typeof str === "undefined") {
+                return;
+            }
+            if (typeof str === "object") {
+                try {
+                    str = JSON.stringify(str);
+                } catch (e) {
+                    /*do nothing */
+                }
+            }
+            str = String(str);
+            return str
+                .replace(/&amp;/g, "&")
+                .replace(/&lt;/g, "<")
+                .replace(/&gt;/g, ">")
+                .replace(/&quot;/g, "\"")
+                .replace(/#x27;/g, "'")
+                .replace(/&#x2F;/g, "\\");
         },
         loader: {
             start: function (id) {
@@ -127,19 +150,20 @@ var clobLoad = (function () {
      **
      ***********************************************************************/
     function setDomElement(pID, pValue, pOpts) {
+        var str;
         if (pID) {
-
             $(pID).empty();
 
-            if (!pOpts.escapeHTML) {
-                if (!pOpts.sanatize) {
-                    $(pID).html(pValue);
-                } else {
-                    var str = sanatizeCLOB(pValue, pOpts);
-                    $(pID).html(str);
-                }
+            if (!pOpts.sanatize) {
+                str = pValue
             } else {
-                $(pID).text(pValue);
+                str = sanatizeCLOB(pValue, pOpts);
+            }
+
+            if (!pOpts.escapeHTML) {
+                $(pID).html(str);
+            } else {
+                $(pID).text(str);
             }
         } else {
             util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
@@ -154,13 +178,14 @@ var clobLoad = (function () {
     function setItem(pID, pValue, pOpts) {
         var str;
         if (pID) {
-            if (!pOpts.escapeHTML) {
-                if (!pOpts.sanatize) {
-                    str = pValue;
-                } else {
-                    str = sanatizeCLOB(pValue, pOpts);
-                }
+
+            if (!pOpts.sanatize) {
+                str = pValue;
             } else {
+                str = sanatizeCLOB(pValue, pOpts);
+            }
+
+            if (pOpts.escapeHTML) {
                 str = util.escapeHTML(pValue);
             }
             util.setItemValue(pID, str);
@@ -179,13 +204,13 @@ var clobLoad = (function () {
         var loaded = false;
 
         if (pID) {
-            if (!pOpts.escapeHTML) {
-                if (!pOpts.sanatize) {
-                    str = pValue;
-                } else {
-                    str = sanatizeCLOB(pValue, pOpts);
-                }
+            if (!pOpts.sanatize) {
+                str = pValue;
             } else {
+                str = sanatizeCLOB(pValue, pOpts);
+            }
+
+            if (pOpts.escapeHTML) {
                 str = util.escapeHTML(pValue);
             }
 
@@ -259,6 +284,15 @@ var clobLoad = (function () {
      ***********************************************************************/
     function uploadClob(pOpts, pThis) {
         var clob = apex.item(pOpts.itemStoresCLOB).getValue();
+
+        if (pOpts.unEscapeHTML) {
+            clob = util.unEscapeHTML(clob);
+        }
+
+        if (pOpts.sanatize) {
+            clob = sanatizeCLOB(clob, pOpts);
+        }
+
         var chunkArr = apex.server.chunk(clob);
         var collectionName = apex.item(pOpts.collectionNameItem).getValue();
 
@@ -300,6 +334,7 @@ var clobLoad = (function () {
     return {
         initialize: function (pThis, pOpts) {
             util.debug.info(pOpts);
+
             var opts = pOpts;
 
             var defaultSanatizeOptions = {
@@ -309,18 +344,31 @@ var clobLoad = (function () {
                 "ALLOWED_ATTR": ["style", "src", "href", "target", "id"]
             };
 
+            /* merge user defined sanatize options */
             opts.sanatizeOptions = util.jsonSaveExtend(pOpts.sanatizeOptions, defaultSanatizeOptions);
+
+            /* Transfrom Yes/No Select List to Boolean */
+            if (opts.sanatize == "N") {
+                opts.sanatize = false;
+            } else {
+                opts.sanatize = true;
+            }
 
             if (opts.escapeHTML == "N") {
                 opts.escapeHTML = false;
-                if (opts.sanatize == "N") {
-                    opts.sanatize = false;
-                } else {
-                    opts.sanatize = true;
-                }
+
             } else {
                 opts.escapeHTML = true;
             }
+
+            if (opts.unEscapeHTML == "N") {
+                opts.unEscapeHTML = false;
+
+            } else {
+                opts.unEscapeHTML = true;
+            }
+
+            /* show loader when set */
             if (opts.showLoader == 'Y') {
                 if (pThis.affectedElements) {
                     $.each(pThis.affectedElements, function (i, element) {
