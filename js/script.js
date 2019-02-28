@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.0";
+    var scriptVersion = "1.0.1";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -107,6 +107,8 @@ var clobLoad = (function () {
             } else {
                 $(pID).text(pValue);
             }
+        } else {
+            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
         }
     }
 
@@ -124,6 +126,8 @@ var clobLoad = (function () {
                 str = util.escapeHTML(pValue);
             }
             util.setItemValue(pID, str);
+        } else {
+            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
         }
     }
 
@@ -155,6 +159,8 @@ var clobLoad = (function () {
                     util.setItemValue(pID, str);
                 }
             }, 700);
+        } else {
+            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
         }
     }
 
@@ -165,15 +171,24 @@ var clobLoad = (function () {
      ***********************************************************************/
     function printClob(pData, pOpts, pThis) {
         try {
+
+            util.debug.info(pData);
+
             if (pData.row && pData.row.length > 0) {
                 $.each(pData.row, function (i, data) {
                     if (data.ELEMENT_SELECTOR && data.CLOB_VALUE) {
-                        if (data.ELEMENT_TYPE == 'dom') {
-                            setDomElement(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
-                        } else if (data.ELEMENT_TYPE == 'item') {
-                            setItem(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
-                        } else if (data.ELEMENT_TYPE == 'richtext') {
-                            setCKE(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
+                        if (data.ELEMENT_TYPE) {
+                            if (data.ELEMENT_TYPE == 'dom') {
+                                setDomElement(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
+                            } else if (data.ELEMENT_TYPE == 'item') {
+                                setItem(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
+                            } else if (data.ELEMENT_TYPE == 'richtext') {
+                                setCKE(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
+                            } else {
+                                util.debug.error("ELEMENT_TYPE must be: dom, item or richtext and not " + data.ELEMENT_TYPE);
+                            }
+                        } else {
+                            util.debug.error("ELEMENT_TYPE is null in SQL for CLOB Render");
                         }
                     }
                 });
@@ -242,10 +257,10 @@ var clobLoad = (function () {
      ***********************************************************************/
     return {
         initialize: function (pThis, pOpts) {
-
+            util.debug.info(pOpts);
             var opts = pOpts;
 
-            if (opts.pEscapeHTML == "N") {
+            if (opts.escapeHTML == "N") {
                 opts.escapeHTML = false;
             } else {
                 opts.escapeHTML = true;
