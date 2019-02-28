@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.2";
+    var scriptVersion = "1.2.1";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -140,8 +140,8 @@ var clobLoad = (function () {
         }
     };
 
-    function sanatizeCLOB(pCLOB, pOpts) {
-        return DOMPurify.sanitize(pCLOB, pOpts.sanatizeOptions);
+    function sanitizeCLOB(pCLOB, pOpts) {
+        return DOMPurify.sanitize(pCLOB, pOpts.sanitizeOptions);
     }
 
     /***********************************************************************
@@ -154,10 +154,10 @@ var clobLoad = (function () {
         if (pID) {
             $(pID).empty();
 
-            if (!pOpts.sanatize) {
+            if (!pOpts.sanitize) {
                 str = pValue
             } else {
-                str = sanatizeCLOB(pValue, pOpts);
+                str = sanitizeCLOB(pValue, pOpts);
             }
 
             if (!pOpts.escapeHTML) {
@@ -178,11 +178,10 @@ var clobLoad = (function () {
     function setItem(pID, pValue, pOpts) {
         var str;
         if (pID) {
-
-            if (!pOpts.sanatize) {
+            if (!pOpts.sanitize) {
                 str = pValue;
             } else {
-                str = sanatizeCLOB(pValue, pOpts);
+                str = sanitizeCLOB(pValue, pOpts);
             }
 
             if (pOpts.escapeHTML) {
@@ -204,10 +203,10 @@ var clobLoad = (function () {
         var loaded = false;
 
         if (pID) {
-            if (!pOpts.sanatize) {
+            if (!pOpts.sanitize) {
                 str = pValue;
             } else {
-                str = sanatizeCLOB(pValue, pOpts);
+                str = sanitizeCLOB(pValue, pOpts);
             }
 
             if (pOpts.escapeHTML) {
@@ -289,8 +288,8 @@ var clobLoad = (function () {
             clob = util.unEscapeHTML(clob);
         }
 
-        if (pOpts.sanatize) {
-            clob = sanatizeCLOB(clob, pOpts);
+        if (pOpts.sanitize) {
+            clob = sanitizeCLOB(clob, pOpts);
         }
 
         var chunkArr = apex.server.chunk(clob);
@@ -337,21 +336,21 @@ var clobLoad = (function () {
 
             var opts = pOpts;
 
-            var defaultSanatizeOptions = {
+            var defaultSanitizeOptions = {
                 "ALLOWED_TAGS": ["h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol",
   "nl", "li", "b", "i", "strong", "em", "strike", "code", "hr", "br", "div",
   "table", "thead", "caption", "tbody", "tr", "th", "td", "pre", "img"],
                 "ALLOWED_ATTR": ["style", "src", "href", "target", "id"]
             };
 
-            /* merge user defined sanatize options */
-            opts.sanatizeOptions = util.jsonSaveExtend(pOpts.sanatizeOptions, defaultSanatizeOptions);
+            /* merge user defined sanitize options */
+            opts.sanitizeOptions = util.jsonSaveExtend(defaultSanitizeOptions, pOpts.sanitizeOptions);
 
             /* Transfrom Yes/No Select List to Boolean */
-            if (opts.sanatize == "N") {
-                opts.sanatize = false;
+            if (opts.sanitize == "N") {
+                opts.sanitize = false;
             } else {
-                opts.sanatize = true;
+                opts.sanitize = true;
             }
 
             if (opts.escapeHTML == "N") {
