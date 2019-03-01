@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.2.1";
+    var scriptVersion = "1.2.2";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -140,6 +140,11 @@ var clobLoad = (function () {
         }
     };
 
+    /***********************************************************************
+     **
+     ** Used to sanitize HTML
+     **
+     ***********************************************************************/
     function sanitizeCLOB(pCLOB, pOpts) {
         return DOMPurify.sanitize(pCLOB, pOpts.sanitizeOptions);
     }
@@ -337,10 +342,8 @@ var clobLoad = (function () {
             var opts = pOpts;
 
             var defaultSanitizeOptions = {
-                "ALLOWED_TAGS": ["h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol",
-  "nl", "li", "b", "i", "strong", "em", "strike", "code", "hr", "br", "div",
-  "table", "thead", "caption", "tbody", "tr", "th", "td", "pre", "img"],
-                "ALLOWED_ATTR": ["style", "src", "href", "target", "id"]
+                "ALLOWED_ATTR": ["accesskey", "align", "alt", "always", "autocomplete", "autoplay", "border", "cellpadding", "cellspacing", "charset", "class", "dir", "height", "href", "id", "lang", "name", "rel", "required", "src", "style", "summary", "tabindex", "target", "title", "type", "value", "width"],
+                "ALLOWED_TAGS": ["a", "address", "b", "blockquote", "br", "caption", "code", "dd", "div", "dl", "dt", "em", "figcaption", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "label", "li", "nl", "ol", "p", "pre", "s", "span", "strike", "strong", "sub", "sup", "table", "tbody", "td", "th", "thead", "tr", "u", "ul"]
             };
 
             /* merge user defined sanitize options */
