@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.2.2";
+    var scriptVersion = "1.2.3.1";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -113,6 +113,17 @@ var clobLoad = (function () {
                 console.error("Error while try to call apex.item" + e);
             }
         },
+        getItemValue: function (itemName) {
+            if (util.isAPEX()) {
+                if (apex.item(itemName) && apex.item(itemName).node != false) {
+                    return apex.item(itemName).getValue();
+                } else {
+                    console.error('Please choose a get item. Because the value (' + value + ') could not be get from item(' + itemName + ')');
+                }
+            } else {
+                console.error("Error while try to call apex.item" + e);
+            }
+        },
         jsonSaveExtend: function (srcConfig, targetConfig) {
             var finalConfig = {};
             /* try to parse config json when string or just set */
@@ -158,17 +169,19 @@ var clobLoad = (function () {
         var str;
         if (pID) {
             $(pID).empty();
+            if (pValue && pValue.length > 0) {
+                if (!pOpts.sanitize) {
+                    str = pValue
+                } else {
+                    str = sanitizeCLOB(pValue, pOpts);
+                }
 
-            if (!pOpts.sanitize) {
-                str = pValue
-            } else {
-                str = sanitizeCLOB(pValue, pOpts);
-            }
-
-            if (!pOpts.escapeHTML) {
-                $(pID).html(str);
-            } else {
-                $(pID).text(str);
+                if (!pOpts.escapeHTML) {
+                    $(pID).html(str);
+                } else {
+                    $(pID).text(str);
+                }
+                apex.event.trigger(pID, 'clobrendercomplete');
             }
         } else {
             util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
@@ -182,54 +195,48 @@ var clobLoad = (function () {
      ***********************************************************************/
     function setItem(pID, pValue, pOpts) {
         var str;
-        if (pID) {
-            if (!pOpts.sanitize) {
-                str = pValue;
-            } else {
-                str = sanitizeCLOB(pValue, pOpts);
-            }
-
-            if (pOpts.escapeHTML) {
-                str = util.escapeHTML(pValue);
-            }
-            util.setItemValue(pID, str);
-        } else {
-            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
-        }
-    }
-
-    /***********************************************************************
-     **
-     ** Used to set an item when it's a rich text editor
-     **
-     ***********************************************************************/
-    function setCKE(pID, pValue, pOpts) {
-        var str;
         var loaded = false;
-
         if (pID) {
-            if (!pOpts.sanitize) {
-                str = pValue;
-            } else {
-                str = sanitizeCLOB(pValue, pOpts);
-            }
-
-            if (pOpts.escapeHTML) {
-                str = util.escapeHTML(pValue);
-            }
-
-            CKEDITOR.on('instanceReady', function (ev) {
-                util.debug.info("CKEDITOR instanceReady fired");
-                util.setItemValue(pID, str);
-                loaded = true;
-            });
-            /* bad workaround if instance ready is not fired. if u have a better idead please update */
-            setTimeout(function () {
-                if (loaded !== true) {
-                    util.debug.info("No Instance Ready event from CKEDITOR");
-                    util.setItemValue(pID, str);
+            if (pValue && pValue.length > 0) {
+                if (!pOpts.sanitize) {
+                    str = pValue;
+                } else {
+                    str = sanitizeCLOB(pValue, pOpts);
                 }
-            }, 700);
+
+                if (pOpts.escapeHTML) {
+                    str = util.escapeHTML(pValue);
+                }
+
+                if (apex.item(pID).item_type.indexOf("CKEDITOR") !== -1) {
+                    CKEDITOR.on('instanceReady', function (ev) {
+                        if (loaded !== true) {
+                            util.debug.info("CKEDITOR instanceReady fired");
+                            util.setItemValue(pID, str);
+                            CKEDITOR.instances[pID].on('contentDom', function () {
+                                apex.event.trigger("#" + pID, 'clobrendercomplete');
+                            });
+                            loaded = true;
+                        }
+                    });
+                    /* bad workaround if instance ready is not fired or this plugin loads to late. if u have a better idead please update */
+                    setTimeout(function () {
+                        if (loaded !== true) {
+                            util.debug.info("No Instance Ready event from CKEDITOR");
+                            util.setItemValue(pID, str);
+                            CKEDITOR.instances[pID].on('contentDom', function () {
+                                apex.event.trigger("#" + pID, 'clobrendercomplete');
+                            });
+                            loaded = true;
+                        }
+                    }, 750);
+                } else {
+                    util.setItemValue(pID, str);
+                    apex.event.trigger("#" + pID, 'clobrendercomplete');
+                }
+            } else {
+                apex.event.trigger("#" + pID, 'clobrendercomplete');
+            }
         } else {
             util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
         }
@@ -253,10 +260,8 @@ var clobLoad = (function () {
                                 setDomElement(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
                             } else if (data.ELEMENT_TYPE == 'item') {
                                 setItem(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
-                            } else if (data.ELEMENT_TYPE == 'richtext') {
-                                setCKE(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
                             } else {
-                                util.debug.error("ELEMENT_TYPE must be: dom, item or richtext and not " + data.ELEMENT_TYPE);
+                                util.debug.error("ELEMENT_TYPE must be: dom, item and not " + data.ELEMENT_TYPE);
                             }
                         } else {
                             util.debug.error("ELEMENT_TYPE is null in SQL for CLOB Render");
@@ -264,17 +269,10 @@ var clobLoad = (function () {
                     }
                 });
             }
-            if (pOpts.showLoader == 'Y') {
-                if (pThis.affectedElements) {
-                    $.each(pThis.affectedElements, function (i, element) {
-                        var elID = $(element).attr("id");
-                        if (elID) {
-                            util.loader.stop("#" + elID);
-                        }
-                        $(element).trigger('clobrendercomplete');
-                    });
-                }
-            }
+            $.each(pOpts.affElements, function (i, element) {
+                util.loader.stop(element);
+                apex.event.trigger(element, 'clobrendercomplete');
+            });
         } catch (e) {
             util.debug.error("Error while render CLOB");
             util.debug.error(e);
@@ -308,20 +306,16 @@ var clobLoad = (function () {
         }, {
             dataType: "text",
             success: function (pData) {
-                if (pThis.affectedElements) {
-                    $.each(pThis.affectedElements, function (i, element) {
-                        if (pOpts.showLoader == 'Y') {
-                            var elID = $(element).attr("id");
-                            if (elID) {
-                                util.loader.stop("#" + elID);
-                            }
-                        }
-                        $(element).trigger('clobuploadcomplete');
-                    });
-                }
+                $.each(pOpts.affElements, function (i, element) {
+                    util.loader.stop(element);
+                    apex.event.trigger(element, 'clobuploadcomplete');
+                });
                 util.debug.info("Upload successful.");
             },
             error: function (jqXHR, textStatus, errorThrown) {
+                $.each(pOpts.affElements, function (i, element) {
+                    util.loader.stop(element);
+                });
                 util.debug.info("Upload error.");
                 util.debug.error(jqXHR);
                 util.debug.error(textStatus);
@@ -370,16 +364,29 @@ var clobLoad = (function () {
                 opts.unEscapeHTML = true;
             }
 
-            /* show loader when set */
             if (opts.showLoader == 'Y') {
-                if (pThis.affectedElements) {
-                    $.each(pThis.affectedElements, function (i, element) {
-                        var elID = $(element).attr("id");
-                        if (elID) {
-                            util.loader.start("#" + elID);
-                        }
-                    });
-                }
+                opts.showLoader = true;
+            } else {
+                opts.showLoader = false;
+            }
+
+            opts.affElements = [];
+
+            /* get Arr of affected elements */
+            if (pThis.affectedElements) {
+                $.each(pThis.affectedElements, function (i, element) {
+                    var elID = $(element).attr("id");
+                    if (elID) {
+                        opts.affElements.push("#" + elID);
+                    }
+                });
+            }
+
+            /* show loader when set */
+            if (opts.showLoader) {
+                $.each(opts.affElements, function (i, element) {
+                    util.loader.start(element);
+                });
             }
 
             /***********************************************************************
