@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.2.3.1";
+    var scriptVersion = "1.3";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -177,7 +177,33 @@ var clobLoad = (function () {
                 }
 
                 if (!pOpts.escapeHTML) {
-                    $(pID).html(str);
+                    if (pOpts.useURTEImgLoader) {
+                        var div = $("<div></div>");
+                        var items2Submit = pOpts.items2Submit;
+                        try {
+                            div.html(str);
+                            var imgItems = div.find('img[alt*="aih#"]');
+                            $.each(imgItems, function (idx, imgItem) {
+                                if (imgItem.title) {
+                                    var pk = imgItem.title;
+                                    var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
+                                        x01: "PRINT_IMAGE",
+                                        x03: pk,
+                                        pageItems: items2Submit
+                                    });
+                                    imgItem.src = imgSRC;
+                                } else {
+                                    util.debug.error("img in richtexteditor has no title. Title is used a primary key to get image from db.")
+                                }
+                            });
+                            $(pID).html(div[0].innerHTML);
+                        } catch (e) {
+                            util.debug.error("Error while try to load images when loading rich text editor.");
+                            util.debug.error(e);
+                        }
+                    } else {
+                        $(pID).html(str);
+                    }
                 } else {
                     $(pID).text(str);
                 }
@@ -206,6 +232,32 @@ var clobLoad = (function () {
 
                 if (pOpts.escapeHTML) {
                     str = util.escapeHTML(pValue);
+                } else {
+                    if (pOpts.useURTEImgLoader) {
+                        var div = $("<div></div>");
+                        var items2Submit = pOpts.items2Submit;
+                        try {
+                            div.html(str);
+                            var imgItems = div.find('img[alt*="aih#"]');
+                            $.each(imgItems, function (idx, imgItem) {
+                                if (imgItem.title) {
+                                    var pk = imgItem.title;
+                                    var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
+                                        x01: "PRINT_IMAGE",
+                                        x03: pk,
+                                        pageItems: items2Submit
+                                    });
+                                    imgItem.src = imgSRC;
+                                } else {
+                                    util.debug.error("img in richtexteditor has no title. Title is used a primary key to get image from db.")
+                                }
+                            });
+                            str = div[0].innerHTML;
+                        } catch (e) {
+                            util.debug.error("Error while try to load images when loading rich text editor.");
+                            util.debug.error(e);
+                        }
+                    }
                 }
 
                 if (apex.item(pID).item_type.indexOf("CKEDITOR") !== -1) {
@@ -300,7 +352,8 @@ var clobLoad = (function () {
 
         var items2Submit = pOpts.items2Submit;
         apex.server.plugin(pOpts.ajaxID, {
-            x01: collectionName,
+            x01: pOpts.functionType,
+            x02: collectionName,
             f01: chunkArr,
             pageItems: items2Submit
         }, {
@@ -370,6 +423,12 @@ var clobLoad = (function () {
                 opts.showLoader = false;
             }
 
+            if (opts.useURTEImgLoader == 'Y') {
+                opts.useURTEImgLoader = true;
+            } else {
+                opts.useURTEImgLoader = false;
+            }
+
             opts.affElements = [];
 
             /* get Arr of affected elements */
@@ -398,6 +457,7 @@ var clobLoad = (function () {
                 var item2Submit = opts.items2Submit;
                 apex.server.plugin(
                     opts.ajaxID, {
+                        x01: pOpts.functionType,
                         pageItems: item2Submit
                     }, {
                         success: function (pData) {
