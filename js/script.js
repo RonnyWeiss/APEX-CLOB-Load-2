@@ -358,7 +358,6 @@ var clobLoad = (function () {
      ***********************************************************************/
     function uploadClob(pOpts, pThis) {
         var clob = util.getItemValue(pOpts.itemStoresCLOB);
-        var chunkArr = util.splitString2Array(clob);
         var items2Submit = pOpts.items2Submit;
         var collectionName = util.getItemValue(pOpts.collectionNameItem);
 
@@ -369,6 +368,8 @@ var clobLoad = (function () {
         if (pOpts.sanitize) {
             clob = sanitizeCLOB(clob, pOpts);
         }
+
+        var chunkArr = util.splitString2Array(clob);
 
         apex.server.plugin(pOpts.ajaxID, {
             x01: pOpts.functionType,
