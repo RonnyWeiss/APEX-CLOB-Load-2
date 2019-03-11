@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.3.1";
+    var scriptVersion = "1.3.2";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -114,11 +114,15 @@ var clobLoad = (function () {
             }
         },
         getItemValue: function (itemName) {
+            if (!itemName) {
+                return "";
+            }
+
             if (util.isAPEX()) {
                 if (apex.item(itemName) && apex.item(itemName).node != false) {
                     return apex.item(itemName).getValue();
                 } else {
-                    console.error('Please choose a get item. Because the value (' + value + ') could not be get from item(' + itemName + ')');
+                    console.error('Please choose a get item. Because the value could not be get from item(' + itemName + ')');
                 }
             } else {
                 console.error("Error while try to call apex.item" + e);
@@ -148,6 +152,22 @@ var clobLoad = (function () {
                 console.error(finalConfig);
             }
             return finalConfig;
+        },
+        splitString2Array: function (pString) {
+            if (util.isAPEX() && apex.server && apex.server.chunk) {
+                return apex.server.chunk(pString);
+            } else {
+                /* apex.server.chunk only avail on APEX 18.2+ */
+                var splitSize = 8000;
+                var tmpSplit;
+                var retArr = [];
+                if (pString.length > splitSize) {
+                    for (retArr = [], tmpSplit = 0; tmpSplit < pString.length;) retArr.push(pString.substr(tmpSplit, splitSize)), tmpSplit += splitSize;
+                    return retArr
+                }
+                retArr.push(pString);
+                return retArr;
+            }
         }
     };
 
@@ -337,7 +357,10 @@ var clobLoad = (function () {
      **
      ***********************************************************************/
     function uploadClob(pOpts, pThis) {
-        var clob = apex.item(pOpts.itemStoresCLOB).getValue();
+        var clob = util.getItemValue(pOpts.itemStoresCLOB);
+        var chunkArr = util.splitString2Array(clob);
+        var items2Submit = pOpts.items2Submit;
+        var collectionName = util.getItemValue(pOpts.collectionNameItem);
 
         if (pOpts.unEscapeHTML) {
             clob = util.unEscapeHTML(clob);
@@ -347,10 +370,6 @@ var clobLoad = (function () {
             clob = sanitizeCLOB(clob, pOpts);
         }
 
-        var chunkArr = apex.server.chunk(clob);
-        var collectionName = apex.item(pOpts.collectionNameItem).getValue();
-
-        var items2Submit = pOpts.items2Submit;
         apex.server.plugin(pOpts.ajaxID, {
             x01: pOpts.functionType,
             x02: collectionName,
