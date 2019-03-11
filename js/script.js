@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.3";
+    var scriptVersion = "1.3.1";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -179,7 +179,7 @@ var clobLoad = (function () {
                 if (!pOpts.escapeHTML) {
                     if (pOpts.useURTEImgLoader) {
                         var div = $("<div></div>");
-                        var items2Submit = pOpts.items2Submit;
+                        var items2SubmitImg = pOpts.items2SubmitImg;
                         try {
                             div.html(str);
                             var imgItems = div.find('img[alt*="aih#"]');
@@ -189,7 +189,7 @@ var clobLoad = (function () {
                                     var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
                                         x01: "PRINT_IMAGE",
                                         x03: pk,
-                                        pageItems: items2Submit
+                                        pageItems: items2SubmitImg
                                     });
                                     imgItem.src = imgSRC;
                                 } else {
@@ -235,7 +235,7 @@ var clobLoad = (function () {
                 } else {
                     if (pOpts.useURTEImgLoader) {
                         var div = $("<div></div>");
-                        var items2Submit = pOpts.items2Submit;
+                        var items2SubmitImg = pOpts.items2SubmitImg;
                         try {
                             div.html(str);
                             var imgItems = div.find('img[alt*="aih#"]');
@@ -245,7 +245,7 @@ var clobLoad = (function () {
                                     var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
                                         x01: "PRINT_IMAGE",
                                         x03: pk,
-                                        pageItems: items2Submit
+                                        pageItems: items2SubmitImg
                                     });
                                     imgItem.src = imgSRC;
                                 } else {
@@ -454,11 +454,11 @@ var clobLoad = (function () {
              **
              ***********************************************************************/
             if (opts.functionType == 'PRINT_CLOB') {
-                var item2Submit = opts.items2Submit;
+                var items2Submit = opts.items2Submit;
                 apex.server.plugin(
                     opts.ajaxID, {
                         x01: pOpts.functionType,
-                        pageItems: item2Submit
+                        pageItems: items2Submit
                     }, {
                         success: function (pData) {
                             printClob(pData, opts, pThis);
