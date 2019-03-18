@@ -1,6 +1,6 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.3.2";
+    var scriptVersion = "1.3.3";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -345,9 +345,15 @@ var clobLoad = (function () {
                 util.loader.stop(element);
                 apex.event.trigger(element, 'clobrendercomplete');
             });
+            apex.da.resume(pThis.resumeCallback, false);
         } catch (e) {
             util.debug.error("Error while render CLOB");
             util.debug.error(e);
+            $.each(pOpts.affElements, function (i, element) {
+                util.loader.stop(element);
+                apex.event.trigger(element, 'clobrendererror');
+            });
+            apex.da.resume(pThis.resumeCallback, true);
         }
     }
 
@@ -384,15 +390,18 @@ var clobLoad = (function () {
                     apex.event.trigger(element, 'clobuploadcomplete');
                 });
                 util.debug.info("Upload successful.");
+                apex.da.resume(pThis.resumeCallback, false);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 $.each(pOpts.affElements, function (i, element) {
                     util.loader.stop(element);
+                    apex.event.trigger(element, 'clobuploaderror');
                 });
                 util.debug.info("Upload error.");
                 util.debug.error(jqXHR);
                 util.debug.error(textStatus);
                 util.debug.error(errorThrown);
+                apex.da.resume(pThis.resumeCallback, true);
             }
         });
     }
@@ -484,7 +493,13 @@ var clobLoad = (function () {
                             printClob(pData, opts, pThis);
                         },
                         error: function (d) {
+                            util.debug.error("Error while make AJAX Call for RenderCLOB");
                             util.debug.error(d.responseText);
+                            $.each(opts.affElements, function (i, element) {
+                                util.loader.stop(element);
+                                apex.event.trigger(element, 'clobrendererror');
+                            });
+                            apex.da.resume(pThis.resumeCallback, true);
                         },
                         dataType: "json"
                     });
