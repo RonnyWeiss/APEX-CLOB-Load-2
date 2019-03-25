@@ -159,10 +159,10 @@ wwv_flow_api.create_plugin(
 '                EXECUTE IMMEDIATE ( VR_PLSQL_BLOCK )',
 '                    USING VR_CLOB;',
 '            EXCEPTION WHEN OTHERS THEN',
-'                APEX_DEBUG.ERROR(''Error while executing dynamic PL/SQL Block after Upload CLOB.'');',
+'                APEX_DEBUG.ERROR(''APEX CLOB Load 2 - Error while executing dynamic PL/SQL Block after Upload CLOB.'');',
 '                APEX_DEBUG.ERROR( DBMS_UTILITY.FORMAT_ERROR_BACKTRACE );',
 '            END;',
-'            APEX_DEBUG.INFO(''Upload and Execute of Dynamic PL/SQL Block successful with CLOB: '' ||',
+'            APEX_DEBUG.INFO(''APEX CLOB Load 2 - Upload and Execute of Dynamic PL/SQL Block successful with CLOB: '' ||',
 '            DBMS_LOB.GETLENGTH(VR_CLOB) ||',
 '            '' Bytes.'');',
 '        ELSE',
@@ -173,7 +173,7 @@ wwv_flow_api.create_plugin(
 '                    P_CLOB001           => VR_CLOB',
 '                );',
 '            ELSE ',
-'                APEX_DEBUG.ERROR(''Item that sotres collection name is null or does not exist.'');',
+'                APEX_DEBUG.ERROR(''APEX CLOB Load 2 - Item that sotres collection name is null or does not exist.'');',
 '            END IF;',
 '            APEX_DEBUG.INFO(''Upload to Collection ('' ||',
 '            VR_COLLECTION_NAME ||',
@@ -187,7 +187,7 @@ wwv_flow_api.create_plugin(
 '                    USING IN VR_PK, OUT VR_FILE_NAME, OUT VR_MIME_TYPE, OUT VR_BLOB;',
 '            EXCEPTION',
 '                WHEN OTHERS THEN',
-'                    APEX_DEBUG.ERROR(''Error while executing dynamic PL/SQL Block to get Blob Source for Image Download.'');',
+'                    APEX_DEBUG.ERROR(''APEX CLOB Load 2 - Error while executing dynamic PL/SQL Block to get Blob Source for Image Download.'');',
 '                    APEX_DEBUG.ERROR(SQLERRM);',
 '                    APEX_DEBUG.ERROR(DBMS_UTILITY.FORMAT_ERROR_BACKTRACE);',
 '                    RAISE;',
@@ -202,7 +202,7 @@ wwv_flow_api.create_plugin(
 '            END IF;',
 '',
 '    ELSE ',
-'        APEX_DEBUG.ERROR(''Function Type does not exists'');',
+'        APEX_DEBUG.ERROR(''APEX CLOB Load 2 - Function Type does not exists'');',
 '    END CASE;',
 '',
 '    RETURN VR_RESULT;',
@@ -295,11 +295,11 @@ wwv_flow_api.create_plugin(
 ,p_substitute_attributes=>true
 ,p_subscribe_plugin_settings=>true
 ,p_help_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'This plug-in can load clob data to any DOM element or Item on the APEX page, including also the RichTextEditor (CKE).',
-'It''s also possible to upload a CLOB value again to the database. This value is stored in APEX Collection or it''s also possible that this plug-ins calls a PL/SQL API e.g. to write the CLOB into table after upload.',
-'You can set Affected Element this is the element where any Dynamic Action Event is fired on and where the loader icon is shown.',
-'When you want to get content of collection when submit page. Call the Upload with Dynamic Action "Before Page Submit".'))
-,p_version_identifier=>'1.3.3'
+'<p>This plug-in can load clob data to any DOM element or Item on the APEX page, including also the RichTextEditor (CKE).</p>',
+'<p>It''s also possible to upload a CLOB value again to the database. This value is stored in APEX Collection or it''s also possible that this plug-ins calls a PL/SQL API e.g. to write the CLOB into table after upload.</p>',
+'<p>You can set Affected Element this is the element where any Dynamic Action Event is fired on and where the loader icon is shown.</p>',
+'<p>When you want to get content of collection when submit page. Call the Upload with Dynamic Action "Before Page Submit", or better fire CLOB Upload with Submit Button and then fire Page Submit with Dynamic Action.</p>'))
+,p_version_identifier=>'1.3.3.1'
 ,p_about_url=>'https://github.com/RonnyWeiss/APEX-CLOB-Load-2'
 ,p_files_version=>117
 );
@@ -475,6 +475,7 @@ wwv_flow_api.create_plugin_attribute(
 ,p_is_required=>true
 ,p_default_value=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'DECLARE',
+'    /* You need to use V(''P1_COL_NAME'') because :P1_COL_NAME is not supported here */',
 '    VR_COL_NAME   VARCHAR2(100) := NVL( V(''P1_COLLECTION_NAME''), ''MY_COLLECTION'');',
 'BEGIN',
 '    APEX_COLLECTION.CREATE_OR_TRUNCATE_COLLECTION(P_COLLECTION_NAME   => VR_COL_NAME);',
@@ -494,6 +495,7 @@ wwv_flow_api.create_plugin_attribute(
 '<p>When want to use APEX items you have to call V(''P1_ITEM'') because of binding and add the items in "Items to Submit". Use (SELECT V(''P1_ITEM'') FROM DUAL) for better perfromance when use in SQL Statement => See Oracle FAST_DUAL.</p>',
 '<pre>',
 'DECLARE',
+'    /* You need to use V(''P1_COL_NAME'') because :P1_COL_NAME is not supported here */',
 '    VR_COL_NAME   VARCHAR2(100) := NVL( V(''P1_COLLECTION_NAME''), ''MY_COLLECTION'');',
 'BEGIN',
 '    APEX_COLLECTION.CREATE_OR_TRUNCATE_COLLECTION(P_COLLECTION_NAME   => VR_COL_NAME);',
@@ -818,6 +820,7 @@ wwv_flow_api.create_plugin_attribute(
 '    VR_MIME_TYPE     VARCHAR2(200);',
 '    VR_BINARY_FILE   BLOB;',
 '    VR_PK            VARCHAR2(200) := :PK;',
+'    /* You need to use V(''P1_COL_NAME'') because :P1_COL_NAME is not supported here */',
 '    VR_COL_NAME      VARCHAR2(200) := NVL(',
 '        V(''P1_COL_NAME''),',
 '        ''IMG_COLLECTION''',
@@ -840,6 +843,10 @@ wwv_flow_api.create_plugin_attribute(
 '',
 '    :FILE_NAME     := VR_FILE_NAME;',
 '    :MIME_TYPE     := VR_MIME_TYPE;',
+'     /* Please ignore PLS-00382: expression is of wrong type',
+'       because binding of :BLOB is not supported by current',
+'       APEX PL/SQL Validator ',
+'     */',
 '    :BINARY_FILE   := VR_BINARY_FILE;',
 'EXCEPTION',
 '    WHEN OTHERS THEN',
@@ -862,6 +869,7 @@ wwv_flow_api.create_plugin_attribute(
 '    VR_MIME_TYPE     VARCHAR2(200);',
 '    VR_BINARY_FILE   BLOB;',
 '    VR_PK            VARCHAR2(200) := :PK;',
+'    /* You need to use V(''P1_COL_NAME'') because :P1_COL_NAME is not supported here */',
 '    VR_COL_NAME      VARCHAR2(200) := NVL(',
 '        V(''P1_COL_NAME''),',
 '        ''IMG_COLLECTION''',
@@ -884,6 +892,10 @@ wwv_flow_api.create_plugin_attribute(
 '',
 '    :FILE_NAME     := VR_FILE_NAME;',
 '    :MIME_TYPE     := VR_MIME_TYPE;',
+'     /* Please ignore PLS-00382: expression is of wrong type',
+'       because binding of :BLOB is not supported by current',
+'       APEX PL/SQL Validator ',
+'     */',
 '    :BINARY_FILE   := VR_BINARY_FILE;',
 'EXCEPTION',
 '    WHEN OTHERS THEN',
