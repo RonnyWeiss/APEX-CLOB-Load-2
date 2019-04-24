@@ -48,8 +48,7 @@ wwv_flow_api.create_plugin(
 '        ''UTF-8''',
 '    );',
 '    HTP.P(''Content-length: '' || DBMS_LOB.GETLENGTH(P_IN_BLOB));',
-'    HTP.P(''Content-Disposition: attachment; filename="'' ||',
-'    P_IN_FILE_NAME || ''"'');',
+'    HTP.P(''Content-Disposition: attachment; filename="'' || APEX_ESCAPE.HTML_ATTRIBUTE ( P_IN_FILE_NAME ) || ''"'');',
 '    OWA_UTIL.HTTP_HEADER_CLOSE;',
 '    WPG_DOCLOAD.DOWNLOAD_FILE(VR_BLOB);',
 'END;',
@@ -299,7 +298,7 @@ wwv_flow_api.create_plugin(
 '<p>It''s also possible to upload a CLOB value again to the database. This value is stored in APEX Collection or it''s also possible that this plug-ins calls a PL/SQL API e.g. to write the CLOB into table after upload.</p>',
 '<p>You can set Affected Element this is the element where any Dynamic Action Event is fired on and where the loader icon is shown.</p>',
 '<p>When you want to get content of collection when submit page. Call the Upload with Dynamic Action "Before Page Submit", or better fire CLOB Upload with Submit Button and then fire Page Submit with Dynamic Action.</p>'))
-,p_version_identifier=>'1.3.3.1'
+,p_version_identifier=>'1.3.3.2'
 ,p_about_url=>'https://github.com/RonnyWeiss/APEX-CLOB-Load-2'
 ,p_files_version=>117
 );
