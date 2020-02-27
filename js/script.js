@@ -1,8 +1,8 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.3.3.3";
+    var scriptVersion = "1.4";
     var util = {
-        version: "1.0.5",
+        version: "1.2.5",
         isAPEX: function () {
             if (typeof (apex) !== 'undefined') {
                 return true;
@@ -68,7 +68,7 @@ var clobLoad = (function () {
             str = String(str);
             return str
                 .replace(/&amp;/g, "&")
-                .replace(/&lt;/g, "<")
+                .replace(/&lt;/g, ">")
                 .replace(/&gt;/g, ">")
                 .replace(/&quot;/g, "\"")
                 .replace(/#x27;/g, "'")
@@ -130,21 +130,22 @@ var clobLoad = (function () {
         },
         jsonSaveExtend: function (srcConfig, targetConfig) {
             var finalConfig = {};
+            var tmpJSON = {};
             /* try to parse config json when string or just set */
             if (typeof targetConfig === 'string') {
                 try {
-                    targetConfig = JSON.parse(targetConfig);
+                    tmpJSON = JSON.parse(targetConfig);
                 } catch (e) {
                     console.error("Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.");
                     console.error(e);
                     console.error(targetConfig);
                 }
             } else {
-                finalConfig = targetConfig;
+                tmpJSON = targetConfig;
             }
             /* try to merge with standard if any attribute is missing */
             try {
-                finalConfig = $.extend(true, srcConfig, targetConfig);
+                finalConfig = $.extend(true, srcConfig, tmpJSON);
             } catch (e) {
                 console.error('Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.');
                 console.error(e);
@@ -216,6 +217,23 @@ var clobLoad = (function () {
                                     util.debug.error("img in richtexteditor has no title. Title is used a primary key to get image from db.")
                                 }
                             });
+
+                            /* force sub elements not to break out of the region*/
+                            div
+                                .find("*")
+                                .css("max-width", "100%")
+                                .css("overflow-wrap", "break-word")
+                                .css("word-wrap", "break-word")
+                                .css("-ms-hyphens", "auto")
+                                .css("-moz-hyphens", "auto")
+                                .css("-webkit-hyphens", "auto")
+                                .css("hyphens", "auto")
+                                .css("white-space", "normal");
+                            div
+                                .find("img")
+                                .css("object-fit", "contain")
+                                .css("object-position", "50% 0%");
+
                             $(pID).html(div[0].innerHTML);
                         } catch (e) {
                             util.debug.error("Error while try to load images when loading rich text editor.");
