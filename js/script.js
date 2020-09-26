@@ -1,8 +1,25 @@
 var clobLoad = (function () {
     "use strict";
-    var scriptVersion = "1.4";
     var util = {
-        version: "1.2.5",
+        /**********************************************************************************
+         ** required functions 
+         *********************************************************************************/
+        featureInfo: {
+            name: "ClOB Load 2",
+            info: {
+                scriptVersion: "1.5",
+                utilVersion: "1.3.5",
+                url: "https://github.com/RonnyWeiss",
+                license: "MIT"
+            }
+        },
+        isDefinedAndNotNull: function (pInput) {
+            if (typeof pInput !== "undefined" && pInput !== null && pInput != "") {
+                return true;
+            } else {
+                return false;
+            }
+        },
         isAPEX: function () {
             if (typeof (apex) !== 'undefined') {
                 return true;
@@ -10,20 +27,51 @@ var clobLoad = (function () {
                 return false;
             }
         },
+        varType: function (pObj) {
+            if (typeof pObj === "object") {
+                var arrayConstructor = [].constructor;
+                var objectConstructor = ({}).constructor;
+                if (pObj.constructor === arrayConstructor) {
+                    return "array";
+                }
+                if (pObj.constructor === objectConstructor) {
+                    return "json";
+                }
+            } else {
+                return typeof pObj;
+            }
+        },
         debug: {
-            info: function (str) {
+            info: function () {
                 if (util.isAPEX()) {
-                    apex.debug.info(str);
+                    var i = 0;
+                    var arr = [];
+                    for (var prop in arguments) {
+                        arr[i] = arguments[prop];
+                        i++;
+                    }
+                    arr.push(util.featureInfo);
+                    apex.debug.info.apply(this, arr);
                 }
             },
-            error: function (str) {
+            error: function () {
+                var i = 0;
+                var arr = [];
+                for (var prop in arguments) {
+                    arr[i] = arguments[prop];
+                    i++;
+                }
+                arr.push(util.featureInfo);
                 if (util.isAPEX()) {
-                    apex.debug.error(str);
+                    apex.debug.error.apply(this, arr);
                 } else {
-                    console.error(str);
+                    console.error.apply(this, arr);
                 }
             }
         },
+        /**********************************************************************************
+         ** optinal functions 
+         *********************************************************************************/
         escapeHTML: function (str) {
             if (str === null) {
                 return null;
@@ -75,7 +123,10 @@ var clobLoad = (function () {
                 .replace(/&#x2F;/g, "\\");
         },
         loader: {
-            start: function (id) {
+            start: function (id, setMinHeight) {
+                if (setMinHeight) {
+                    $(id).css("min-height", "100px");
+                }
                 if (util.isAPEX()) {
                     apex.util.showSpinner($(id));
                 } else {
@@ -83,6 +134,9 @@ var clobLoad = (function () {
                     var faLoader = $("<span></span>");
                     faLoader.attr("id", "loader" + id);
                     faLoader.addClass("ct-loader");
+                    faLoader.css("text-align", "center");
+                    faLoader.css("width", "100%");
+                    faLoader.css("display", "block");
 
                     /* define refresh icon with animation */
                     var faRefresh = $("<i></i>");
@@ -97,7 +151,10 @@ var clobLoad = (function () {
                     $(id).append(faLoader);
                 }
             },
-            stop: function (id) {
+            stop: function (id, removeMinHeight) {
+                if (removeMinHeight) {
+                    $(id).css("min-height", "");
+                }
                 $(id + " > .u-Processing").remove();
                 $(id + " > .ct-loader").remove();
             }
@@ -107,10 +164,10 @@ var clobLoad = (function () {
                 if (apex.item(itemName) && apex.item(itemName).node != false) {
                     apex.item(itemName).setValue(value);
                 } else {
-                    console.error('Please choose a set item. Because the value (' + value + ') can not be set on item (' + itemName + ')');
+                    util.debug.error("Please choose a set item. Because the value (" + value + ") can not be set on item (" + itemName + ")");
                 }
             } else {
-                console.error("Error while try to call apex.item" + e);
+                util.debug.error("Error while try to call apex.item");
             }
         },
         getItemValue: function (itemName) {
@@ -122,10 +179,10 @@ var clobLoad = (function () {
                 if (apex.item(itemName) && apex.item(itemName).node != false) {
                     return apex.item(itemName).getValue();
                 } else {
-                    console.error('Please choose a get item. Because the value could not be get from item(' + itemName + ')');
+                    util.debug.error("Please choose a get item. Because the value could not be get from item(" + itemName + ")");
                 }
             } else {
-                console.error("Error while try to call apex.item" + e);
+                util.debug.error("Error while try to call apex.item");
             }
         },
         jsonSaveExtend: function (srcConfig, targetConfig) {
@@ -136,38 +193,46 @@ var clobLoad = (function () {
                 try {
                     tmpJSON = JSON.parse(targetConfig);
                 } catch (e) {
-                    console.error("Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.");
-                    console.error(e);
-                    console.error(targetConfig);
+                    util.debug.error({
+                        "msg": "Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.",
+                        "err": e,
+                        "targetConfig": targetConfig
+                    });
                 }
             } else {
-                tmpJSON = targetConfig;
+                tmpJSON = $.extend(true, {}, targetConfig);
             }
             /* try to merge with standard if any attribute is missing */
             try {
-                finalConfig = $.extend(true, srcConfig, tmpJSON);
+                finalConfig = $.extend(true, {}, srcConfig, tmpJSON);
             } catch (e) {
-                console.error('Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.');
-                console.error(e);
-                finalConfig = srcConfig;
-                console.error(finalConfig);
+                finalConfig = $.extend(true, {}, srcConfig);
+                util.debug.error({
+                    "msg": "Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.",
+                    "err": e,
+                    "finalConfig": finalConfig
+                });
             }
             return finalConfig;
         },
         splitString2Array: function (pString) {
-            if (util.isAPEX() && apex.server && apex.server.chunk) {
-                return apex.server.chunk(pString);
-            } else {
-                /* apex.server.chunk only avail on APEX 18.2+ */
-                var splitSize = 8000;
-                var tmpSplit;
-                var retArr = [];
-                if (pString.length > splitSize) {
-                    for (retArr = [], tmpSplit = 0; tmpSplit < pString.length;) retArr.push(pString.substr(tmpSplit, splitSize)), tmpSplit += splitSize;
-                    return retArr
+            if (util.isDefinedAndNotNull(pString) && pString.length > 0) {
+                if (util.isAPEX() && apex.server && apex.server.chunk) {
+                    return apex.server.chunk(pString);
+                } else {
+                    /* apex.server.chunk only avail on APEX 18.2+ */
+                    var splitSize = 8000;
+                    var tmpSplit;
+                    var retArr = [];
+                    if (pString.length > splitSize) {
+                        for (retArr = [], tmpSplit = 0; tmpSplit < pString.length;) retArr.push(pString.substr(tmpSplit, splitSize)), tmpSplit += splitSize;
+                        return retArr
+                    }
+                    retArr.push(pString);
+                    return retArr;
                 }
-                retArr.push(pString);
-                return retArr;
+            } else {
+                return [];
             }
         }
     };
