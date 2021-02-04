@@ -154,7 +154,6 @@ var clobLoad = (function () {
                                     pk = imgItem.alt.split("aih##")[1];
                                 }
                                 if (pk) {
-                                    var pk = imgItem.title;
                                     var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
                                         x01: "PRINT_IMAGE",
                                         x03: pk,
