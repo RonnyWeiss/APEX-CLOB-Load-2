@@ -13,31 +13,14 @@ whenever sqlerror exit sql.sqlcode rollback
 --------------------------------------------------------------------------------
 begin
 wwv_flow_api.import_begin (
- p_version_yyyy_mm_dd=>'2020.10.01'
-,p_release=>'20.2.0.00.20'
+ p_version_yyyy_mm_dd=>'2016.08.24'
+,p_release=>'5.1.3.00.05'
 ,p_default_workspace_id=>21717127411908241868
 ,p_default_application_id=>103428
-,p_default_id_offset=>0
 ,p_default_owner=>'RD_DEV'
 );
 end;
 /
- 
-prompt APPLICATION 103428 - Ronny's Demo App
---
--- Application Export:
---   Application:     103428
---   Name:            Ronny's Demo App
---   Date and Time:   22:21 Thursday February 4, 2021
---   Exported By:     RONNYWEISS@OUTLOOK.COM
---   Flashback:       0
---   Export Type:     Component Export
---   Manifest
---     PLUGIN: 64887869323691230468
---   Manifest End
---   Version:         20.2.0.00.20
---   Instance ID:     63113759365424
---
 
 begin
   -- replace components
