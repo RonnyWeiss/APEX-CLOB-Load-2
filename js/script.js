@@ -1,77 +1,13 @@
 var clobLoad = (function () {
     "use strict";
     var util = {
-        /**********************************************************************************
-         ** required functions 
-         *********************************************************************************/
-        featureInfo: {
-            name: "ClOB Load 2",
-            info: {
-                scriptVersion: "1.5",
-                utilVersion: "1.3.5",
-                url: "https://github.com/RonnyWeiss",
-                license: "MIT"
-            }
+        featureDetails: {
+            name: "APEX ClOB Load 2",
+            scriptVersion: "1.5.1",
+            utilVersion: "1.4",
+            url: "https://github.com/RonnyWeiss",
+            license: "MIT"
         },
-        isDefinedAndNotNull: function (pInput) {
-            if (typeof pInput !== "undefined" && pInput !== null && pInput != "") {
-                return true;
-            } else {
-                return false;
-            }
-        },
-        isAPEX: function () {
-            if (typeof (apex) !== 'undefined') {
-                return true;
-            } else {
-                return false;
-            }
-        },
-        varType: function (pObj) {
-            if (typeof pObj === "object") {
-                var arrayConstructor = [].constructor;
-                var objectConstructor = ({}).constructor;
-                if (pObj.constructor === arrayConstructor) {
-                    return "array";
-                }
-                if (pObj.constructor === objectConstructor) {
-                    return "json";
-                }
-            } else {
-                return typeof pObj;
-            }
-        },
-        debug: {
-            info: function () {
-                if (util.isAPEX()) {
-                    var i = 0;
-                    var arr = [];
-                    for (var prop in arguments) {
-                        arr[i] = arguments[prop];
-                        i++;
-                    }
-                    arr.push(util.featureInfo);
-                    apex.debug.info.apply(this, arr);
-                }
-            },
-            error: function () {
-                var i = 0;
-                var arr = [];
-                for (var prop in arguments) {
-                    arr[i] = arguments[prop];
-                    i++;
-                }
-                arr.push(util.featureInfo);
-                if (util.isAPEX()) {
-                    apex.debug.error.apply(this, arr);
-                } else {
-                    console.error.apply(this, arr);
-                }
-            }
-        },
-        /**********************************************************************************
-         ** optinal functions 
-         *********************************************************************************/
         escapeHTML: function (str) {
             if (str === null) {
                 return null;
@@ -86,18 +22,7 @@ var clobLoad = (function () {
                     /*do nothing */
                 }
             }
-            if (util.isAPEX()) {
-                return apex.util.escapeHTML(String(str));
-            } else {
-                str = String(str);
-                return str
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#x27;")
-                    .replace(/\//g, "&#x2F;");
-            }
+            return apex.util.escapeHTML(String(str));
         },
         unEscapeHTML: function (str) {
             if (str === null) {
@@ -127,29 +52,7 @@ var clobLoad = (function () {
                 if (setMinHeight) {
                     $(id).css("min-height", "100px");
                 }
-                if (util.isAPEX()) {
-                    apex.util.showSpinner($(id));
-                } else {
-                    /* define loader */
-                    var faLoader = $("<span></span>");
-                    faLoader.attr("id", "loader" + id);
-                    faLoader.addClass("ct-loader");
-                    faLoader.css("text-align", "center");
-                    faLoader.css("width", "100%");
-                    faLoader.css("display", "block");
-
-                    /* define refresh icon with animation */
-                    var faRefresh = $("<i></i>");
-                    faRefresh.addClass("fa fa-refresh fa-2x fa-anim-spin");
-                    faRefresh.css("background", "rgba(121,121,121,0.6)");
-                    faRefresh.css("border-radius", "100%");
-                    faRefresh.css("padding", "15px");
-                    faRefresh.css("color", "white");
-
-                    /* append loader */
-                    faLoader.append(faRefresh);
-                    $(id).append(faLoader);
-                }
+                apex.util.showSpinner($(id));
             },
             stop: function (id, removeMinHeight) {
                 if (removeMinHeight) {
@@ -157,32 +60,6 @@ var clobLoad = (function () {
                 }
                 $(id + " > .u-Processing").remove();
                 $(id + " > .ct-loader").remove();
-            }
-        },
-        setItemValue: function (itemName, value) {
-            if (util.isAPEX()) {
-                if (apex.item(itemName) && apex.item(itemName).node != false) {
-                    apex.item(itemName).setValue(value);
-                } else {
-                    util.debug.error("Please choose a set item. Because the value (" + value + ") can not be set on item (" + itemName + ")");
-                }
-            } else {
-                util.debug.error("Error while try to call apex.item");
-            }
-        },
-        getItemValue: function (itemName) {
-            if (!itemName) {
-                return "";
-            }
-
-            if (util.isAPEX()) {
-                if (apex.item(itemName) && apex.item(itemName).node != false) {
-                    return apex.item(itemName).getValue();
-                } else {
-                    util.debug.error("Please choose a get item. Because the value could not be get from item(" + itemName + ")");
-                }
-            } else {
-                util.debug.error("Error while try to call apex.item");
             }
         },
         jsonSaveExtend: function (srcConfig, targetConfig) {
@@ -193,7 +70,8 @@ var clobLoad = (function () {
                 try {
                     tmpJSON = JSON.parse(targetConfig);
                 } catch (e) {
-                    util.debug.error({
+                    apex.debug.error({
+                        "module": "util.js",
                         "msg": "Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.",
                         "err": e,
                         "targetConfig": targetConfig
@@ -207,7 +85,8 @@ var clobLoad = (function () {
                 finalConfig = $.extend(true, {}, srcConfig, tmpJSON);
             } catch (e) {
                 finalConfig = $.extend(true, {}, srcConfig);
-                util.debug.error({
+                apex.debug.error({
+                    "module": "util.js",
                     "msg": "Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.",
                     "err": e,
                     "finalConfig": finalConfig
@@ -216,8 +95,8 @@ var clobLoad = (function () {
             return finalConfig;
         },
         splitString2Array: function (pString) {
-            if (util.isDefinedAndNotNull(pString) && pString.length > 0) {
-                if (util.isAPEX() && apex.server && apex.server.chunk) {
+            if (typeof pString !== "undefined" && pString !== null && pString != "" && pString.length > 0) {
+                if (apex && apex.server && apex.server.chunk) {
                     return apex.server.chunk(pString);
                 } else {
                     /* apex.server.chunk only avail on APEX 18.2+ */
@@ -270,7 +149,11 @@ var clobLoad = (function () {
                             div.html(str);
                             var imgItems = div.find('img[alt*="aih#"]');
                             $.each(imgItems, function (idx, imgItem) {
-                                if (imgItem.title) {
+                                var pk = imgItem.title;
+                                if (!pk) {
+                                    pk = imgItem.alt.split("aih##")[1];
+                                }
+                                if (pk) {
                                     var pk = imgItem.title;
                                     var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
                                         x01: "PRINT_IMAGE",
@@ -279,7 +162,11 @@ var clobLoad = (function () {
                                     });
                                     imgItem.src = imgSRC;
                                 } else {
-                                    util.debug.error("img in richtexteditor has no title. Title is used a primary key to get image from db.")
+                                    apex.debug.error({
+                                        "fct": util.featureDetails.name + " - " + "setDomElement",
+                                        "msg": "Primary key of img[alt*=\"aih#\"] is missing",
+                                        "featureDetails": util.featureDetails
+                                    });
                                 }
                             });
 
@@ -301,8 +188,12 @@ var clobLoad = (function () {
 
                             $(pID).html(div[0].innerHTML);
                         } catch (e) {
-                            util.debug.error("Error while try to load images when loading rich text editor.");
-                            util.debug.error(e);
+                            apex.debug.error({
+                                "fct": util.featureDetails.name + " - " + "setDomElement",
+                                "msg": "Error while try to load images",
+                                "err": e,
+                                "featureDetails": util.featureDetails
+                            });
                         }
                     } else {
                         $(pID).html(str);
@@ -313,7 +204,11 @@ var clobLoad = (function () {
                 apex.event.trigger(pID, 'clobrendercomplete');
             }
         } else {
-            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
+            apex.debug.error({
+                "fct": util.featureDetails.name + " - " + "setDomElement",
+                "msg": "No ELEMENT_SELECTOR set in SQL for CLOB Render",
+                "featureDetails": util.featureDetails
+            });
         }
     }
 
@@ -343,7 +238,11 @@ var clobLoad = (function () {
                             div.html(str);
                             var imgItems = div.find('img[alt*="aih#"]');
                             $.each(imgItems, function (idx, imgItem) {
-                                if (imgItem.title) {
+                                var pk = imgItem.title;
+                                if (!pk) {
+                                    pk = imgItem.alt.split("aih##")[1];
+                                }
+                                if (pk) {
                                     var pk = imgItem.title;
                                     var imgSRC = apex.server.pluginUrl(pOpts.ajaxID, {
                                         x01: "PRINT_IMAGE",
@@ -352,13 +251,22 @@ var clobLoad = (function () {
                                     });
                                     imgItem.src = imgSRC;
                                 } else {
-                                    util.debug.error("img in richtexteditor has no title. Title is used a primary key to get image from db.")
+                                    apex.debug.error({
+                                        "fct": util.featureDetails.name + " - " + "setItem",
+                                        "msg": "img in richtexteditor has no title. Title is used a primary key to get image from db.",
+
+                                        "featureDetails": util.featureDetails
+                                    });
                                 }
                             });
                             str = div[0].innerHTML;
                         } catch (e) {
-                            util.debug.error("Error while try to load images when loading rich text editor.");
-                            util.debug.error(e);
+                            apex.debug.error({
+                                "fct": util.featureDetails.name + " - " + "setItem",
+                                "msg": "Error while try to load images when loading rich text editor.",
+                                "err": e,
+                                "featureDetails": util.featureDetails
+                            });
                         }
                     }
                 }
@@ -366,8 +274,14 @@ var clobLoad = (function () {
                 if (apex.item(pID).item_type.indexOf("CKEDITOR") !== -1) {
                     CKEDITOR.on('instanceReady', function (ev) {
                         if (loaded !== true) {
-                            util.debug.info("CKEDITOR instanceReady fired");
-                            util.setItemValue(pID, str);
+
+                            apex.debug.info({
+                                "fct": util.featureDetails.name + " - " + "setItem",
+                                "msg": "CKEDITOR instanceReady fired",
+                                "featureDetails": util.featureDetails
+                            });
+
+                            apex.item(pID).setValue(str);
                             CKEDITOR.instances[pID].on('contentDom', function () {
                                 apex.event.trigger("#" + pID, 'clobrendercomplete');
                             });
@@ -377,8 +291,14 @@ var clobLoad = (function () {
                     /* bad workaround if instance ready is not fired or this plugin loads to late. if u have a better idead please update */
                     setTimeout(function () {
                         if (loaded !== true) {
-                            util.debug.info("No Instance Ready event from CKEDITOR");
-                            util.setItemValue(pID, str);
+
+                            apex.debug.info({
+                                "fct": util.featureDetails.name + " - " + "setItem",
+                                "msg": "No Instance Ready event from CKEDITOR",
+                                "featureDetails": util.featureDetails
+                            });
+
+                            apex.item(pID).setValue(str);
                             CKEDITOR.instances[pID].on('contentDom', function () {
                                 apex.event.trigger("#" + pID, 'clobrendercomplete');
                             });
@@ -386,14 +306,18 @@ var clobLoad = (function () {
                         }
                     }, 750);
                 } else {
-                    util.setItemValue(pID, str);
+                    apex.item(pID).setValue(str);
                     apex.event.trigger("#" + pID, 'clobrendercomplete');
                 }
             } else {
                 apex.event.trigger("#" + pID, 'clobrendercomplete');
             }
         } else {
-            util.debug.error("No ELEMENT_SELECTOR set in SQL for CLOB Render");
+            apex.debug.error({
+                "fct": util.featureDetails.name + " - " + "setItem",
+                "msg": "No ELEMENT_SELECTOR set in SQL for CLOB Render",
+                "featureDetails": util.featureDetails
+            });
         }
     }
 
@@ -404,9 +328,6 @@ var clobLoad = (function () {
      ***********************************************************************/
     function printClob(pData, pOpts, pThis) {
         try {
-
-            util.debug.info(pData);
-
             if (pData.row && pData.row.length > 0) {
                 $.each(pData.row, function (i, data) {
                     if (data.ELEMENT_SELECTOR && data.CLOB_VALUE) {
@@ -416,10 +337,18 @@ var clobLoad = (function () {
                             } else if (data.ELEMENT_TYPE == 'item') {
                                 setItem(data.ELEMENT_SELECTOR, data.CLOB_VALUE, pOpts);
                             } else {
-                                util.debug.error("ELEMENT_TYPE must be: dom, item and not " + data.ELEMENT_TYPE);
+                                apex.debug.error({
+                                    "fct": util.featureDetails.name + " - " + "printClob",
+                                    "msg": "ELEMENT_TYPE must be: dom, item and not " + data.ELEMENT_TYPE,
+                                    "featureDetails": util.featureDetails
+                                });
                             }
                         } else {
-                            util.debug.error("ELEMENT_TYPE is null in SQL for CLOB Render");
+                            apex.debug.error({
+                                "fct": util.featureDetails.name + " - " + "printClob",
+                                "msg": "ELEMENT_TYPE is null in SQL for CLOB Render",
+                                "featureDetails": util.featureDetails
+                            });
                         }
                     }
                 });
@@ -430,8 +359,12 @@ var clobLoad = (function () {
             });
             apex.da.resume(pThis.resumeCallback, false);
         } catch (e) {
-            util.debug.error("Error while render CLOB");
-            util.debug.error(e);
+            apex.debug.error({
+                "fct": util.featureDetails.name + " - " + "printClob",
+                "msg": "Error while render CLOB",
+                "err": e,
+                "featureDetails": util.featureDetails
+            });
             $.each(pOpts.affElements, function (i, element) {
                 util.loader.stop(element);
                 apex.event.trigger(element, 'clobrendererror');
@@ -446,9 +379,9 @@ var clobLoad = (function () {
      **
      ***********************************************************************/
     function uploadClob(pOpts, pThis) {
-        var clob = util.getItemValue(pOpts.itemStoresCLOB);
+        var clob = apex.item(pOpts.itemStoresCLOB).getValue();
         var items2Submit = pOpts.items2Submit;
-        var collectionName = util.getItemValue(pOpts.collectionNameItem);
+        var collectionName = apex.item(pOpts.collectionNameItem).getValue();
 
         if (pOpts.unEscapeHTML) {
             clob = util.unEscapeHTML(clob);
@@ -472,7 +405,11 @@ var clobLoad = (function () {
                     util.loader.stop(element);
                     apex.event.trigger(element, 'clobuploadcomplete');
                 });
-                util.debug.info("Upload successful.");
+                apex.debug.info({
+                    "fct": util.featureDetails.name + " - " + "uploadClob",
+                    "msg": "Clob Upload successful",
+                    "featureDetails": util.featureDetails
+                });
                 apex.da.resume(pThis.resumeCallback, false);
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -480,10 +417,14 @@ var clobLoad = (function () {
                     util.loader.stop(element);
                     apex.event.trigger(element, 'clobuploaderror');
                 });
-                util.debug.info("Upload error.");
-                util.debug.error(jqXHR);
-                util.debug.error(textStatus);
-                util.debug.error(errorThrown);
+                apex.debug.error({
+                    "fct": util.featureDetails.name + " - " + "uploadClob",
+                    "msg": "Clob Upload error",
+                    "jqXHR": jqXHR,
+                    "textStatus": textStatus,
+                    "errorThrown": errorThrown,
+                    "featureDetails": util.featureDetails
+                });
                 apex.da.resume(pThis.resumeCallback, true);
             }
         });
@@ -496,8 +437,15 @@ var clobLoad = (function () {
      ***********************************************************************/
     return {
         initialize: function (pThis, pOpts) {
-            util.debug.info(pOpts);
 
+            apex.debug.info({
+                "fct": util.featureDetails.name + " - " + "initialize",
+                "arguments": {
+                    "pThis": pThis,
+                    "pOpts": pOpts
+                },
+                "featureDetails": util.featureDetails
+            });
             var opts = pOpts;
 
             var defaultSanitizeOptions = {
@@ -573,11 +521,21 @@ var clobLoad = (function () {
                         pageItems: items2Submit
                     }, {
                         success: function (pData) {
+                            apex.debug.info({
+                                "fct": util.featureDetails.name + " - " + "initialize",
+                                "msg": "AJAX data received",
+                                "pData": pData,
+                                "featureDetails": util.featureDetails
+                            });
                             printClob(pData, opts, pThis);
                         },
                         error: function (d) {
-                            util.debug.error("Error while make AJAX Call for RenderCLOB");
-                            util.debug.error(d.responseText);
+                            apex.debug.error({
+                                "fct": util.featureDetails.name + " - " + "initialize",
+                                "msg": "AJAX data error",
+                                "response": d,
+                                "featureDetails": util.featureDetails
+                            });
                             $.each(opts.affElements, function (i, element) {
                                 util.loader.stop(element);
                                 apex.event.trigger(element, 'clobrendererror');
