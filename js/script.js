@@ -3,8 +3,8 @@ var clobLoad = (function () {
     var util = {
         featureDetails: {
             name: "APEX ClOB Load 2",
-            scriptVersion: "1.5.1",
-            utilVersion: "1.4",
+            scriptVersion: "1.5.2",
+            utilVersion: "1.6",
             url: "https://github.com/RonnyWeiss",
             license: "MIT"
         },
